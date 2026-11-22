@@ -63,7 +63,9 @@ jobs:
           ./gradlew --no-daemon testReleaseUnitTest assembleRelease bundleRelease \
             -PappVersionName=${{ steps.version.outputs.name }} -PappVersionCode=${{ steps.version.outputs.code }}
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk "dist/uptime-loom-${{ steps.version.outputs.name }}.apk"
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            cp "app/build/outputs/apk/release/app-$abi-release.apk" "dist/uptime-loom-${{ steps.version.outputs.name }}-$abi.apk"
+          done
           cp app/build/outputs/bundle/release/app-release.aab "dist/uptime-loom-${{ steps.version.outputs.name }}.aab"
           (cd dist && sha256sum * > SHA256SUMS.txt)
 

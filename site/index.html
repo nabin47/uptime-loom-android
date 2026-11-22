@@ -235,12 +235,15 @@
     document.getElementById('ghFoot').href = repoUrl;
 
     const latest = data.latest;
-    if(latest && latest.apk){
+    const main = latest && latest.apks && latest.apks[0];
+    if(main){
       const a = document.getElementById('apkBtn');
-      a.href = latest.apk.url; a.removeAttribute('aria-disabled');
+      a.href = main.url; a.removeAttribute('aria-disabled');
       a.querySelector('span').textContent = 'Download APK';
-      document.getElementById('versionMeta').textContent =
-        `Version ${latest.tag.replace(/^v/, '')} · ${latest.date} · ${mb(latest.apk.size)} · Android 7.0 or newer`;
+      const others = latest.apks.slice(1).map(x => `<a href="${esc(x.url)}">${esc(x.label)}</a>`).join(' · ');
+      document.getElementById('versionMeta').innerHTML =
+        `Version ${esc(latest.tag.replace(/^v/, ''))} · ${mb(main.size)} · Android 7.0 or newer` +
+        (others ? `<br>Other phones: ${others}` : '');
     }
     if(data.playUrl){
       const p = document.getElementById('playBtn');
@@ -259,7 +262,7 @@
             </span>
           </header>
           <div class="notes">${md(r.notes) || '<p>No notes.</p>'}</div>
-          ${r.apk ? `<p><a href="${esc(r.apk.url)}">Download APK</a> <span class="tag">${mb(r.apk.size)}</span></p>` : ''}
+          ${(r.apks || []).length ? `<p>${r.apks.map(x => `<a href="${esc(x.url)}">${esc(x.label)}</a> <span class="tag">${mb(x.size)}</span>`).join(' &nbsp; ')}</p>` : ''}
         </article>`).join('');
     }
   }).catch(() => {});

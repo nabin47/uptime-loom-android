@@ -9,7 +9,8 @@ git push origin v1.0.0
 
 The **Release** workflow then:
 
-1. builds the release APK and App Bundle (AAB), version `1.0.0` / code `10000`
+1. builds the App Bundle (AAB) for Google Play and one APK per processor type
+   (arm64 for most phones, 32-bit ARM, x86_64), version `1.0.0` / code `10000`
 2. publishes a GitHub Release with both files and auto-generated notes
    (tags with a dash, like `v1.1.0-beta.1`, become pre-releases)
 3. uploads the AAB to Google Play's **internal testing** track (if configured)
