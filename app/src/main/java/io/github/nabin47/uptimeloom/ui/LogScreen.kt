@@ -87,7 +87,7 @@ fun LogScreen(state: UiState, vm: MainViewModel) {
     }
     val rows = remember(state.sessions, state.daysOff, from, to, stats) {
         val byDay = state.sessions.groupBy { Fmt.date(it.start) }.filterKeys { !it.isBefore(from) && it.isBefore(to) }
-        val days = (byDay.keys + state.daysOff.keys.filter { !it.isBefore(from) && it.isBefore(to) }).toSortedSet().reversed()
+        val days = (byDay.keys + state.daysOff.keys.filter { !it.isBefore(from) && it.isBefore(to) }).toSet().sortedDescending()
         buildList {
             for (d in days) {
                 add(LogItem.Header(d, stats.dayTotal(d), state.daysOff[d]?.note, stats.isWeekend(d)))
