@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Uptime Loom</string>
+    <string name="widget_name">Today\'s hours</string>
+    <string name="widget_description">Hours worked today and what\'s left this week</string>
+</resources>

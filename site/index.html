@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uptime Loom for Android</title>
+<meta name="description" content="Automatic, battery-friendly work-hours tracking. Set your work areas once; Uptime Loom counts your time when you arrive and stops when you leave.">
+<meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --line:#e3e6eb; --text:#141820; --muted:#5f6876; --faint:#8a929e;
+    --accent:#3866d6; --accent-2:#5b8cff; --good:#2f9e63; --warn:#b7791f; --shadow:0 1px 2px #0000000d, 0 8px 24px #00000010;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0b0d10; --card:#15181d; --line:#232831; --text:#edeff2; --muted:#9aa2ae; --faint:#6b7380;
+      --accent:#8daeff; --accent-2:#5b8cff; --good:#5bc98a; --warn:#e0a95b; --shadow:0 1px 2px #0006, 0 8px 24px #0005; }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:650;color:var(--text)}
+  .brand:hover{text-decoration:none}
+  .brand svg{width:28px;height:28px}
+  nav .links{display:flex;gap:18px;font-size:14px}
+  nav .links a{color:var(--muted)}
+  @media (max-width:640px){ nav .links{display:none} }
+
+  .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center;padding:48px 0 72px}
+  @media (max-width:860px){ .hero{grid-template-columns:1fr;padding-top:24px} .phone{margin:0 auto} }
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(34px,5vw,54px);line-height:1.08;letter-spacing:-.02em;margin:10px 0 16px}
+  .lede{font-size:18px;color:var(--muted);max-width:34em;margin:0 0 28px}
+  .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;font-weight:600;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+  .btn:hover{text-decoration:none;border-color:var(--faint)}
+  .btn.primary{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+  .btn.primary:hover{filter:brightness(1.07)}
+  .btn[aria-disabled="true"]{opacity:.55;pointer-events:none;box-shadow:none}
+  .btn svg{width:18px;height:18px}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:14px}
+
+  /* phone mock-up */
+  .phone{width:min(300px,82vw);aspect-ratio:9/18.5;border-radius:40px;background:var(--card);border:10px solid #1b1f26;box-shadow:0 30px 60px #0000002a;padding:22px 16px;display:flex;flex-direction:column;gap:12px}
+  @media (prefers-color-scheme: dark){ .phone{border-color:#2a2f38} }
+  .p-chip{align-self:flex-start;font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--good)}
+  .p-label{font-size:11px;color:var(--muted);margin-top:4px}
+  .p-time{font-family:var(--mono);font-size:38px;font-weight:650;letter-spacing:-.02em;line-height:1}
+  .p-sub{font-size:12px;color:var(--muted)}
+  .p-bar{height:8px;border-radius:9px;background:var(--line);overflow:hidden}
+  .p-bar i{display:block;height:100%;width:72%;background:var(--accent-2);border-radius:9px}
+  .p-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+  .p-tile{border:1px solid var(--line);border-radius:14px;padding:10px}
+  .p-tile b{display:block;font-size:17px}
+  .p-tile span{font-size:10.5px;color:var(--muted)}
+  .p-bars{display:flex;align-items:flex-end;gap:5px;height:60px;margin-top:auto}
+  .p-bars i{flex:1;background:var(--line);border-radius:4px 4px 2px 2px}
+  .p-bars i.on{background:var(--accent-2)}
+
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  h2{font-size:28px;letter-spacing:-.01em;margin:0 0 8px}
+  .sub{color:var(--muted);margin:0 0 28px;max-width:40em}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+  .card h3{font-size:16px;margin:10px 0 6px}
+  .card p{margin:0;color:var(--muted);font-size:14.5px}
+  .icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent-2) 14%,transparent);color:var(--accent)}
+  .icon svg{width:20px;height:20px}
+  .steps{counter-reset:s;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .steps .card::before{counter-increment:s;content:counter(s);font-family:var(--mono);font-size:13px;color:var(--accent);border:1px solid var(--line);border-radius:99px;width:28px;height:28px;display:grid;place-items:center}
+
+  .release{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:12px}
+  .release header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;justify-content:space-between}
+  .release h3{margin:0;font-size:17px}
+  .tag{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+  .tag.latest{color:var(--good);border-color:var(--good)}
+  .notes{color:var(--muted);font-size:14.5px;margin-top:8px}
+  .notes h4{color:var(--text);font-size:14px;margin:12px 0 4px}
+  .notes ul{margin:4px 0;padding-left:20px}
+  .empty{color:var(--muted);font-size:15px}
+
+  details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:10px}
+  summary{cursor:pointer;font-weight:600}
+  details p{color:var(--muted);margin:10px 0 0}
+
+  footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--faint);font-size:13px;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between}
+  footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="#">
+      <svg viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" rx="26" fill="#1b2a4a"/><path fill="#5b8cff" d="M30,34h48a5,5 0 0 1 0,10h-48a5,5 0 0 1 0,-10z"/><path fill="#9db8ec" d="M30,49h34a5,5 0 0 1 0,10h-34a5,5 0 0 1 0,-10z"/><path fill="#5bc98a" d="M30,64h41a5,5 0 0 1 0,10h-41a5,5 0 0 1 0,-10z"/></svg>
+      Uptime Loom
+    </a>
+    <div class="links">
+      <a href="#features">Features</a><a href="#how">How it works</a><a href="#releases">Releases</a><a href="#faq">FAQ</a>
+      <a id="ghLink" href="https://github.com/nabin47/uptime-loom-android">GitHub</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Android · free · open source</div>
+      <h1>Your work hours,<br>counted for you.</h1>
+      <p class="lede">Set your work areas once. Uptime Loom starts counting when you arrive and stops when you leave, with no buttons to remember and almost no battery used. Everything stays on your phone.</p>
+      <div class="cta">
+        <a class="btn primary" id="apkBtn" href="#releases" aria-disabled="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+          <span>Download APK</span>
+        </a>
+        <a class="btn" id="playBtn" href="#" aria-disabled="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 2.8v18.4c0 .6.6 1 1.1.7l15.6-9.2a.8.8 0 0 0 0-1.4L5.1 2.1C4.6 1.8 4 2.2 4 2.8z"/></svg>
+          <span id="playLabel">Google Play · coming soon</span>
+        </a>
+      </div>
+      <div class="meta" id="versionMeta">Android 7.0 or newer</div>
+    </div>
+
+    <div class="phone" aria-hidden="true">
+      <span class="p-chip">● At Office</span>
+      <div class="p-label">Today</div>
+      <div class="p-time">06:42:10</div>
+      <div class="p-sub">Started 8:52 AM at Office</div>
+      <div class="p-bar"><i></i></div>
+      <div class="p-sub">1h 18m to go of today's 8h</div>
+      <div class="p-grid">
+        <div class="p-tile"><b>31.7h</b><span>This week</span></div>
+        <div class="p-tile"><b>8h 16m</b><span>Left this week</span></div>
+        <div class="p-tile"><b>14/15</b><span>Days present</span></div>
+        <div class="p-tile"><b>9:07 AM</b><span>Usual arrival</span></div>
+      </div>
+      <div class="p-bars"><i style="height:70%"></i><i style="height:88%"></i><i style="height:76%"></i><i style="height:92%"></i><i style="height:64%"></i><i style="height:12%"></i><i class="on" style="height:58%"></i></div>
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <h2>Everything you need, nothing you don't</h2>
+    <p class="sub">Built for people whose workday is tied to a place: offices, campuses, labs, sites.</p>
+    <div class="grid">
+      <div class="card"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></div>
+        <h3>Starts and stops by itself</h3><p>Arrive and it starts counting. Leave and it stops. A quick trip out for coffee doesn't split your day.</p></div>
+      <div class="card"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="10" r="4"/><circle cx="16" cy="14" r="4"/></svg></div>
+        <h3>Multiple work areas</h3><p>Office, another building, a second campus: time counts while you're in any of them.</p></div>
+      <div class="card"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+        <h3>Plain, useful statistics</h3><p>Hours vs. your weekly target, what's still needed per day, days present and missed, on-time arrivals, charts and a calendar.</p></div>
+      <div class="card"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2M6 10v4"/></svg></div>
+        <h3>Easy on your battery</h3><p>Android itself watches your areas and only wakes the app when you arrive or leave. No GPS running all day, no permanent notification.</p></div>
+      <div class="card"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+        <h3>Private by design</h3><p>No account, no servers, no ads, no tracking. Your locations and hours never leave your phone.</p></div>
+      <div class="card"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></div>
+        <h3>Fix, mark, export</h3><p>Edit or add sessions, mark days off for leave or holidays, check in manually, and export everything to CSV. Plus a home-screen widget.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sub">Three minutes of setup, then you can forget about it.</p>
+    <div class="steps">
+      <div class="card"><h3>Install and allow location</h3><p>Choose "Allow all the time" so arrivals are noticed while the app is closed.</p></div>
+      <div class="card"><h3>Add your work areas</h3><p>Stand at work and tap "Use my current location", or search an address. Add as many as you need.</p></div>
+      <div class="card"><h3>Set your week</h3><p>Weekly target, weekend days and work hours. Then just go to work.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="releases">
+  <div class="wrap">
+    <h2>Releases</h2>
+    <p class="sub">What's new in each version. This list updates automatically with every release.</p>
+    <div id="releaseList"><p class="empty">The first release is on its way.</p></div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <details><summary>Will it drain my battery?</summary><p>No. It uses Android's geofencing, the same low-power system Google recommends for "arrive/leave" features. The phone only wakes the app when you cross into or out of a work area.</p></details>
+    <details><summary>Why does it need location "all the time"?</summary><p>Arriving and leaving happen while the app is closed. Without "Allow all the time" Android won't tell the app you've arrived. Your location is used only on your phone and never uploaded.</p></details>
+    <details><summary>How accurate are the times?</summary><p>Usually within a few minutes. Android reports arrivals and departures with a short delay, and the app records the time you actually crossed the boundary. You can edit any session.</p></details>
+    <details><summary>My phone has no Google Play services (e.g. some Huawei phones).</summary><p>It still works: the app checks your location every 15 minutes using the low-power network location, so times are accurate to about 15 minutes.</p></details>
+    <details><summary>It doesn't notice when I arrive on my phone.</summary><p>Some brands stop apps in the background. In the app, open Today → Finish setting up → "Don't restrict in the background", and see <a href="https://dontkillmyapp.com/">dontkillmyapp.com</a> for your phone.</p></details>
+    <details><summary>Is there a desktop version?</summary><p>Yes, for Windows: <a href="https://github.com/nabin47/uptime-loom">Uptime Loom for Windows</a> tracks time from when your PC is on.</p></details>
+  </div>
+</section>
+
+<div class="wrap">
+  <footer>
+    <span>© 2026 Jubair Ahmed Nabin · MIT License</span>
+    <span><a href="privacy.html">Privacy policy</a> · <a id="ghFoot" href="https://github.com/nabin47/uptime-loom-android">Source code</a></span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  // Tiny, safe Markdown for GitHub release notes: headings, lists, bold, links.
+  function md(src){
+    const out = []; let inList = false;
+    const inline = t => esc(t)
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2">$1</a>')
+      .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, (m, p, u) => `${p}<a href="${u}">${u.replace(/^https?:\/\/(www\.)?github\.com\//, '')}</a>`)
+      .replace(/(^|\s)@([A-Za-z0-9-]+)/g, '$1<a href="https://github.com/$2">@$2</a>');
+    for(const line of String(src).split(/\r?\n/)){
+      const l = line.trim();
+      const item = /^[-*] (.*)/.exec(l);
+      if(item){ if(!inList){ out.push('<ul>'); inList = true; } out.push('<li>' + inline(item[1]) + '</li>'); continue; }
+      if(inList){ out.push('</ul>'); inList = false; }
+      const h = /^#{1,6} (.*)/.exec(l);
+      if(h) out.push('<h4>' + inline(h[1]) + '</h4>');
+      else if(l) out.push('<p>' + inline(l) + '</p>');
+    }
+    if(inList) out.push('</ul>');
+    return out.join('');
+  }
+  function mb(bytes){ return bytes ? (bytes/1048576).toFixed(1) + ' MB' : ''; }
+
+  fetch('data.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(data => {
+    if(!data) return;
+    const repoUrl = 'https://github.com/' + data.repo;
+    document.getElementById('ghLink').href = repoUrl;
+    document.getElementById('ghFoot').href = repoUrl;
+
+    const latest = data.latest;
+    if(latest && latest.apk){
+      const a = document.getElementById('apkBtn');
+      a.href = latest.apk.url; a.removeAttribute('aria-disabled');
+      a.querySelector('span').textContent = 'Download APK';
+      document.getElementById('versionMeta').textContent =
+        `Version ${latest.tag.replace(/^v/, '')} · ${latest.date} · ${mb(latest.apk.size)} · Android 7.0 or newer`;
+    }
+    if(data.playUrl){
+      const p = document.getElementById('playBtn');
+      p.href = data.playUrl; p.removeAttribute('aria-disabled');
+      document.getElementById('playLabel').textContent = 'Get it on Google Play';
+    }
+    if(data.releases && data.releases.length){
+      document.getElementById('releaseList').innerHTML = data.releases.map(r => `
+        <article class="release">
+          <header>
+            <h3><a href="${esc(r.url)}">${esc(r.name)}</a></h3>
+            <span>
+              ${latest && r.tag === latest.tag ? '<span class="tag latest">latest</span>' : ''}
+              ${r.prerelease ? '<span class="tag">pre-release</span>' : ''}
+              <span class="tag">${esc(r.date)}</span>
+            </span>
+          </header>
+          <div class="notes">${md(r.notes) || '<p>No notes.</p>'}</div>
+          ${r.apk ? `<p><a href="${esc(r.apk.url)}">Download APK</a> <span class="tag">${mb(r.apk.size)}</span></p>` : ''}
+        </article>`).join('');
+    }
+  }).catch(() => {});
+})();
+</script>
+</body>
+</html>
