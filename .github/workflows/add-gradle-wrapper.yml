@@ -1,9 +1,12 @@
 name: Add Gradle wrapper
 
-# One-off helper: generates gradlew + gradle/wrapper/* and commits them to
-# the branch it's run on (Actions -> Add Gradle wrapper -> Run workflow).
+# Helper: generates gradlew + gradle/wrapper/* and commits them to the branch
+# it runs on, if they're missing (Actions -> Add Gradle wrapper -> Run
+# workflow). Also runs when this file changes.
 on:
   workflow_dispatch:
+  push:
+    paths: [".github/workflows/add-gradle-wrapper.yml"]
 
 permissions:
   contents: write
@@ -22,6 +25,7 @@ jobs:
           gradle-version: "8.13"
       - name: Generate and commit
         run: |
+          if [ -f gradlew ]; then echo "Wrapper already present"; exit 0; fi
           gradle wrapper --gradle-version 8.13 --distribution-type bin
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

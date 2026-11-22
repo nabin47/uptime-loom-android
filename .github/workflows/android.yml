@@ -37,6 +37,15 @@ jobs:
       - name: Unit tests, lint and debug build
         run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
 
+      # Same build as a release (R8 shrinking, release lint checks), so
+      # problems show up before tagging. Signed with the debug key here.
+      - name: Release build check
+        run: |
+          ./gradlew --no-daemon assembleRelease
+          ls -l app/build/outputs/apk/release/
+          SIZE=$(du -k app/build/outputs/apk/release/*.apk | cut -f1)
+          echo "Release APK size: ${SIZE} KB" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
