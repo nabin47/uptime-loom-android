@@ -7,9 +7,12 @@ import io.github.nabin47.uptimeloom.tracking.Tracker
 
 /** Tiny service locator: one instance of each per process. */
 object Graph {
-    lateinit var db: AppDb; private set
-    lateinit var settings: SettingsRepo; private set
-    lateinit var tracker: Tracker; private set
+    lateinit var db: AppDb
+        private set
+    lateinit var settings: SettingsRepo
+        private set
+    lateinit var tracker: Tracker
+        private set
     @Volatile private var ready = false
 
     fun init(context: Context) {

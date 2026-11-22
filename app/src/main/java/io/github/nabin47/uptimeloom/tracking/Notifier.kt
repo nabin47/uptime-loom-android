@@ -1,6 +1,7 @@
 package io.github.nabin47.uptimeloom.tracking
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -40,6 +41,7 @@ object Notifier {
     private fun clock(context: Context, t: Long) =
         android.text.format.DateFormat.getTimeFormat(context).format(Date(t))
 
+    @SuppressLint("MissingPermission") // checked at the top for Android 13+
     private fun post(context: Context, title: String, text: String) {
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -57,7 +59,6 @@ object Notifier {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .build()
-        @Suppress("MissingPermission")
         NotificationManagerCompat.from(context).notify(ID, n)
     }
 

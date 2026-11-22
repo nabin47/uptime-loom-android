@@ -48,12 +48,11 @@ object AreaMonitor {
         Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
 
+    @SuppressLint("InlinedApi") // FLAG_MUTABLE is simply ignored before Android 12
     private fun pendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, GeofenceReceiver::class.java).setAction(GeofenceReceiver.ACTION)
         // Must be mutable: Play services adds the event details to it.
-        val flags = PendingIntent.FLAG_UPDATE_CURRENT or
-            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0)
-        return PendingIntent.getBroadcast(context, 0, intent, flags)
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
     }
 
     /** (Re-)register every enabled area. Safe to call any time. */

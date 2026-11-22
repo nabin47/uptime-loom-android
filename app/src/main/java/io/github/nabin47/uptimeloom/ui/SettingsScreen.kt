@@ -63,7 +63,7 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
 
         SectionCard(title = "Your week") {
             Label("Week starts on")
-            ChipRow(DayOfWeek.entries.map { it to it.getDisplayName(TextStyle.SHORT, Locale.getDefault()) }, selected = { it == s.weekStart }) { d ->
+            ChipRow(DayOfWeek.values().map { it to it.getDisplayName(TextStyle.SHORT, Locale.getDefault()) }, selected = { it == s.weekStart }) { d ->
                 vm.updateSettings { it.copy(weekStart = d) }
             }
             Label("Weekend days (not workdays)")

@@ -24,7 +24,7 @@ object Locator {
             val client = LocationServices.getFusedLocationProviderClient(context)
             val cts = CancellationTokenSource()
             val priority = if (preferLowPower) Priority.PRIORITY_BALANCED_POWER_ACCURACY else Priority.PRIORITY_HIGH_ACCURACY
-            suspendCancellableCoroutine { cont ->
+            suspendCancellableCoroutine<Location?> { cont ->
                 cont.invokeOnCancellation { cts.cancel() }
                 client.getCurrentLocation(priority, cts.token)
                     .addOnSuccessListener { if (cont.isActive) cont.resume(it) }
@@ -50,7 +50,7 @@ object Locator {
         if (recent != null) return recent
         val provider = providers.firstOrNull() ?: return null
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            return suspendCancellableCoroutine { cont ->
+            return suspendCancellableCoroutine<Location?> { cont ->
                 val signal = CancellationSignal()
                 cont.invokeOnCancellation { signal.cancel() }
                 val executor = Executors.newSingleThreadExecutor()
@@ -60,7 +60,7 @@ object Locator {
                 }
             }
         }
-        return suspendCancellableCoroutine { cont ->
+        return suspendCancellableCoroutine<Location?> { cont ->
             val listener = object : android.location.LocationListener {
                 override fun onLocationChanged(location: Location) {
                     if (cont.isActive) cont.resume(location)

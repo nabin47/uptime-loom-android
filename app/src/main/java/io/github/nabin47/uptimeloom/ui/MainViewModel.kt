@@ -71,7 +71,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             now = now,
             zone = ZoneId.systemDefault(),
         )
-        UiState(true, i.settings, i.places, i.sessions, offDates, i.presence, stats, AreaMonitor.mode(getApplication()))
+        UiState(true, i.settings, i.places, i.sessions, offDates, i.presence, stats, AreaMonitor.mode(getApplication<Application>()))
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
 
@@ -121,7 +121,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Re-arm area monitoring (after permissions change, areas edited...). */
     fun resync(reason: String) = viewModelScope.launch(Dispatchers.IO) {
-        AreaMonitor.sync(getApplication(), reason)
+        AreaMonitor.sync(getApplication<Application>(), reason)
     }
 
     fun exportCsv(uri: Uri, onDone: (Boolean) -> Unit) = viewModelScope.launch {
@@ -149,5 +149,5 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         onDone(ok)
     }
 
-    private suspend fun refreshWidget() = runCatching { TodayWidget.refresh(getApplication()) }
+    private suspend fun refreshWidget() = runCatching { TodayWidget.refresh(getApplication<Application>()) }
 }
