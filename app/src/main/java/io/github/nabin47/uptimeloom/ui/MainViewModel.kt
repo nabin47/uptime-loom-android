@@ -19,6 +19,7 @@ import io.github.nabin47.uptimeloom.tracking.TrackingMode
 import io.github.nabin47.uptimeloom.widget.TodayWidget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -74,6 +75,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         UiState(true, i.settings, i.places, i.sessions, offDates, i.presence, stats, AreaMonitor.mode(getApplication<Application>()))
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
+
+    /** Text shared to the app (e.g. a place from Google Maps), waiting to be opened. */
+    val sharedText = MutableStateFlow<String?>(null)
+    fun onShared(text: String?) { if (!text.isNullOrBlank()) sharedText.value = text }
+    fun consumeShared() { sharedText.value = null }
 
     val events = db.events().observeRecent()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList<EventLog>())

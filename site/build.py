@@ -14,11 +14,28 @@ from datetime import datetime, timezone
 SITE = os.path.dirname(os.path.abspath(__file__))
 
 
-def asset(rel, ext):
+ABI_LABELS = {
+    "arm64-v8a": "Most phones (64-bit)",
+    "armeabi-v7a": "Older phones (32-bit)",
+    "x86_64": "Chromebooks / x86",
+}
+
+
+def apks(rel):
+    """APK downloads, best first (64-bit ARM fits nearly every phone)."""
+    out = []
     for a in rel.get("assets", []):
-        if a.get("name", "").endswith(ext):
-            return {"url": a["browser_download_url"], "size": a.get("size", 0)}
-    return None
+        name = a.get("name", "")
+        if not name.endswith(".apk"):
+            continue
+        abi = next((k for k in ABI_LABELS if name.endswith(f"-{k}.apk")), None)
+        out.append({
+            "url": a["browser_download_url"], "size": a.get("size", 0),
+            "abi": abi, "label": ABI_LABELS.get(abi, "APK"),
+        })
+    order = list(ABI_LABELS)
+    out.sort(key=lambda x: order.index(x["abi"]) if x["abi"] in order else len(order))
+    return out
 
 
 def main(releases_path, out):
@@ -35,7 +52,7 @@ def main(releases_path, out):
             "notes": r.get("body") or "",
             "url": r.get("html_url", ""),
             "prerelease": bool(r.get("prerelease")),
-            "apk": asset(r, ".apk"),
+            "apks": apks(r),
         })
     latest = next((r for r in releases if not r["prerelease"]), releases[0] if releases else None)
     data = {

@@ -43,8 +43,10 @@ jobs:
         run: |
           ./gradlew --no-daemon assembleRelease
           ls -l app/build/outputs/apk/release/
-          SIZE=$(du -k app/build/outputs/apk/release/*.apk | cut -f1)
-          echo "Release APK size: ${SIZE} KB" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Release APK sizes" >> "$GITHUB_STEP_SUMMARY"
+          for f in app/build/outputs/apk/release/*.apk; do
+            echo "- $(basename "$f"): $(( $(stat -c %s "$f") / 1024 )) KB" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Upload test APK
         uses: actions/upload-artifact@v4

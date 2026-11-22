@@ -18,7 +18,7 @@
 <main>
   <a href="./">← Uptime Loom</a>
   <h1>Privacy policy</h1>
-  <p class="date">Last updated: 22 November 2026</p>
+  <p class="date">Last updated: 23 November 2026</p>
 
   <p>Uptime Loom ("the app") is an open-source work-hours tracker. It is designed so that your data stays on your phone.</p>
 
@@ -33,7 +33,13 @@
     <li>Everything is stored only on your device. The app has no servers and no account system, and it does not upload, sell or share any data.</li>
     <li>The app contains no advertising and no analytics or tracking libraries.</li>
     <li>Location fixes are processed on the device by Android (and, on phones that have them, Google Play services) to detect entering or leaving a work area. Only the resulting times are stored, not a history of your location.</li>
-    <li>Searching for an address when adding a work area uses Android's built-in geocoder, which may send the search text to your phone's geocoding provider (for example Google). The app itself does not receive or keep it.</li>
+    <li><b>Setting up a work area</b> is the only time the app uses the internet:
+      <ul>
+        <li>The map is loaded from <a href="https://openfreemap.org/">OpenFreeMap</a> (OpenStreetMap data). Like any map, the tile server sees which map area is being viewed and your IP address.</li>
+        <li>Searching for an address uses Android's built-in geocoder, which may send the search text to your phone's geocoding provider (for example Google).</li>
+        <li>If you paste or share a short Google Maps link (maps.app.goo.gl), the app asks Google where that link points so it can read the coordinates.</li>
+      </ul>
+      The app itself has no server and receives none of this. Tracking your arrival and departure never uses the internet.</li>
     <li>Android's own device backup or phone-to-phone transfer may include the app's data so it survives a phone change. This is controlled by your phone's settings and your backup account; the developer has no access to it.</li>
     <li>When you choose "Export", the app writes a CSV file to the location you pick. What happens to that file afterwards is up to you.</li>
   </ul>

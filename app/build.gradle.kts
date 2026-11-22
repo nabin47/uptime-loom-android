@@ -38,6 +38,19 @@ android {
         }
     }
 
+    // One APK per processor type for release builds (GitHub downloads), so
+    // nobody downloads the map engine for CPUs they don't have. The App
+    // Bundle for Google Play is unaffected: Play does this split itself.
+    val releaseTask = gradle.startParameter.taskNames.any { it.contains("assembleRelease", ignoreCase = true) }
+    splits {
+        abi {
+            isEnable = releaseTask
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = false
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -103,6 +116,7 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
     implementation(libs.play.services.location)
+    implementation(libs.maplibre.android)
 
     testImplementation(libs.junit)
 }
