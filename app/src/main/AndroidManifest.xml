@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <!-- Re-register work areas after the phone restarts. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Only for the map and address search when you set up a work area. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Optional "arrived / left" notifications. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -32,10 +34,17 @@
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- "Share" a place from Google Maps (or any app) to add it as a work area. -->
+            <intent-filter android:label="@string/share_add_area">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 

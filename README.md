@@ -14,7 +14,9 @@ The Android companion to [Uptime Loom for Windows](https://github.com/nabin47/up
 
 - **Automatic** — counts time while you're inside any of your work areas.
   Short trips out (coffee, car park) don't split your day.
-- **Multiple work areas** — office, other buildings, a second campus.
+- **Multiple work areas** — office, other buildings, a second campus. Pick
+  each on a map (search, your location, or drag the map under the pin), paste
+  a Google Maps link, or **share a place from Google Maps** to the app.
 - **Statistics** — today's live timer; this week and month against your
   target; hours still needed per remaining workday; ahead/behind; days
   present and missed; on-time arrivals and early departures; weekend work.
@@ -26,7 +28,9 @@ The Android companion to [Uptime Loom for Windows](https://github.com/nabin47/up
 - **Battery-friendly** — Android's geofencing watches your areas and wakes the
   app only when you arrive or leave. No always-on GPS, no permanent
   notification.
-- **Private** — no servers, no ads, no analytics.
+- **Private** — no servers, no ads, no analytics. The internet is used only
+  while setting up an area (map tiles from OpenFreeMap / OpenStreetMap,
+  address search, reading shared Google Maps links); tracking is offline.
 - **Modern** — Kotlin, Jetpack Compose, Material 3 with Material You colours,
   light and dark themes.
 
@@ -78,6 +82,7 @@ Console, Pages) is in [RELEASING.md](RELEASING.md).
 
 ```
 app/src/main/java/io/github/nabin47/uptimeloom/
+  location/   map picker (MapLibre + OpenFreeMap), Google Maps link parsing, address search
   data/       Room database (areas, sessions, presence, days off, event log), settings
   tracking/   geofencing, fallback checks, receivers, background jobs, notifications
   stats/      statistics engine (pure Kotlin, unit-tested)

@@ -3,4 +3,5 @@
     <string name="app_name">Uptime Loom</string>
     <string name="widget_name">Today\'s hours</string>
     <string name="widget_description">Hours worked today and what\'s left this week</string>
+    <string name="share_add_area">Add as work area</string>
 </resources>
