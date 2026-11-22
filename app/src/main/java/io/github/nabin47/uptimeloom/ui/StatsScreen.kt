@@ -96,7 +96,7 @@ fun StatsScreen(state: UiState, vm: MainViewModel) {
             BarChart(
                 values = shown.map { it.ms / 3_600_000f },
                 colors = shown.map { if (stats.isWeekend(it.date)) muted else track },
-                labels = shown.mapIndexed { i, d -> if (i % 7 == 6 || i == shown.lastIndex) d.dayOfMonth.toString() else null },
+                labels = shown.mapIndexed { i, d -> if (i % 7 == 6 || i == shown.lastIndex) d.date.dayOfMonth.toString() else null },
                 description = "Daily hours for the last 30 days",
                 line = avg,
             )
