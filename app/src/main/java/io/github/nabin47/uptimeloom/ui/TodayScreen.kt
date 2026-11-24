@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.nabin47.uptimeloom.stats.fmtClock
 import io.github.nabin47.uptimeloom.stats.fmtH
 import io.github.nabin47.uptimeloom.stats.fmtHM
@@ -85,6 +86,7 @@ fun TodayScreen(state: UiState, vm: MainViewModel, openAreas: () -> Unit) {
         Text("Uptime Loom", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
 
         SetupCard(state, vm, openAreas)
+        OnOpenModeNote(state, vm)
 
         SectionCard {
             val inside = state.presence.mapNotNull { p -> state.placeName(p.placeId) }
@@ -198,7 +200,8 @@ private fun SetupCard(state: UiState, vm: MainViewModel, openAreas: () -> Unit) 
     // Re-arm monitoring whenever the app comes back with everything granted.
     LaunchedEffect(location, background, hasArea) { if (location && hasArea) vm.resync("app opened") }
 
-    if (location && background && notifications && battery && hasArea) return
+    val onOpenOnly = state.settings.trackOnOpenOnly
+    if (location && (background || onOpenOnly) && notifications && (battery || onOpenOnly) && hasArea) return
 
     if (disclosure) {
         AlertDialog(
@@ -232,13 +235,22 @@ private fun SetupCard(state: UiState, vm: MainViewModel, openAreas: () -> Unit) 
             detail = "Choose \"Precise\" so arriving and leaving are noticed reliably.",
             action = "Allow",
         ) { disclosure = true }
-        SetupStep(
-            done = background, enabled = location, title = "Allow location all the time",
-            detail = if (Build.VERSION.SDK_INT >= 30) "On the next screen choose \"Allow all the time\"." else "Needed while the app is closed.",
-            action = "Allow",
-        ) { disclosure = true }
+        if (!onOpenOnly) {
+            SetupStep(
+                done = background, enabled = location, title = "Allow location all the time",
+                detail = if (Build.VERSION.SDK_INT >= 30) "On the next screen choose \"Allow all the time\". This is what makes counting automatic."
+                else "Needed while the app is closed.",
+                action = "Allow",
+            ) { disclosure = true }
+            if (location && !background) {
+                TextButton(
+                    onClick = { vm.updateSettings { it.copy(trackOnOpenOnly = true) } },
+                    modifier = Modifier.padding(start = 26.dp),
+                ) { Text("I'd rather open the app myself") }
+            }
+        }
         SetupStep(done = hasArea, title = "Add your work area", detail = "Your office, campus or anywhere else that counts as work.", action = "Add") { openAreas() }
-        SetupStep(
+        if (!onOpenOnly) SetupStep(
             done = battery, title = "Don't restrict in the background",
             detail = "Some phones stop apps in the background. Find Uptime Loom in the list and choose \"Don't optimise\" / \"Unrestricted\".",
             action = "Open",
@@ -252,6 +264,35 @@ private fun SetupCard(state: UiState, vm: MainViewModel, openAreas: () -> Unit) 
             SetupStep(done = notifications, title = "Notifications (optional)", detail = "A quiet note when tracking starts or stops.", action = "Allow") {
                 notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
+        }
+    }
+}
+
+/**
+ * Shown while counting depends on opening the app: either chosen in
+ * Settings, or because location isn't allowed all the time.
+ */
+@Composable
+private fun OnOpenModeNote(state: UiState, vm: MainViewModel) {
+    val context = LocalContext.current
+    var refresh by remember { mutableIntStateOf(0) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }
+    val location = remember(refresh) { AreaMonitor.hasForegroundLocation(context) }
+    val checking by vm.checking.collectAsStateWithLifecycle()
+    // Only when chosen in Settings. (If location simply isn't allowed all the
+    // time, the setup card explains it and offers this mode.) Needs an area
+    // and basic location access first, which the setup card also covers.
+    if (!state.settings.trackOnOpenOnly || !location || state.places.none { it.enabled }) return
+
+    SectionCard {
+        Text("Counting when you open the app", style = MaterialTheme.typography.titleSmall)
+        Text(
+            if (checking) "Checking your location…"
+            else "Open Uptime Loom when you arrive and again after you leave. Time in between is counted.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = { vm.updateSettings { it.copy(trackOnOpenOnly = false) } }, modifier = Modifier.padding(top = 2.dp)) {
+            Text("Switch to automatic")
         }
     }
 }

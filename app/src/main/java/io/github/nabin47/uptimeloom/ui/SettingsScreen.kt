@@ -23,6 +23,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -95,6 +96,18 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
         }
 
         SectionCard(title = "Arriving and leaving") {
+            Label("How counting starts and stops")
+            ModeOption(
+                selected = !s.trackOnOpenOnly,
+                title = "Automatically (recommended)",
+                detail = "Starts when you arrive and stops when you leave, even when the app is closed. Needs location \"Allow all the time\".",
+            ) { vm.updateSettings { it.copy(trackOnOpenOnly = false) } }
+            ModeOption(
+                selected = s.trackOnOpenOnly,
+                title = "When I open the app",
+                detail = "No background location. Open the app when you arrive and again after you leave; it counts the time in between.",
+            ) { vm.updateSettings { it.copy(trackOnOpenOnly = true) } }
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
             var arrive by remember(s.arriveDelayMin) { mutableStateOf(s.arriveDelayMin.toFloat()) }
             var leave by remember(s.leaveDelayMin) { mutableStateOf(s.leaveDelayMin.toFloat()) }
             Label("Count as arrived after ${arrive.toInt()} min inside an area")
@@ -155,6 +168,20 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
             },
             confirmButton = { TextButton(onClick = { showEvents = false }) { Text("Close") } },
         )
+    }
+}
+
+@Composable
+private fun ModeOption(selected: Boolean, title: String, detail: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 6.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        RadioButton(selected = selected, onClick = onClick)
+        Column(Modifier.padding(top = 12.dp, start = 4.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 

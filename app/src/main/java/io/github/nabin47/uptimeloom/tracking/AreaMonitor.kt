@@ -57,9 +57,27 @@ object AreaMonitor {
 
     /** (Re-)register every enabled area. Safe to call any time. */
     @SuppressLint("MissingPermission") // checked just below
+    /**
+     * True when counting happens only when the app is opened: chosen in
+     * Settings, or because location isn't allowed "all the time".
+     */
+    suspend fun countsOnOpenOnly(context: Context): Boolean {
+        Graph.init(context)
+        return Graph.settings.current().trackOnOpenOnly || !hasBackgroundLocation(context)
+    }
+
     suspend fun sync(context: Context, reason: String) {
         Graph.init(context)
         val places = Graph.db.places().enabled()
+        if (Graph.settings.current().trackOnOpenOnly) {
+            // The user chose "when I open the app": nothing watches in the background.
+            Scheduling.setFallbackChecks(context, false)
+            if (mode(context) == TrackingMode.GEOFENCING) {
+                awaitTask { LocationServices.getGeofencingClient(context).removeGeofences(pendingIntent(context)) }
+            }
+            Graph.tracker.log("setup", "Counting when the app is opened (${places.size} area(s), $reason)")
+            return
+        }
         val mode = mode(context)
         Scheduling.setFallbackChecks(context, mode == TrackingMode.FALLBACK && places.isNotEmpty())
         if (mode == TrackingMode.FALLBACK) {
@@ -102,19 +120,25 @@ object AreaMonitor {
         else Graph.tracker.log("problem", "Couldn't watch areas: $error")
     }
 
-    /** One fallback check: where are we, and did that change? */
-    suspend fun fallbackCheck(context: Context) {
+    /**
+     * One location check: where are we now, and did that change? Used by the
+     * 15-minute fallback (phones without Google Play services) and when the
+     * app is opened in "when I open the app" mode. Returns false if there was
+     * no location fix.
+     */
+    suspend fun checkNow(context: Context, via: String, preferLowPower: Boolean): Boolean {
         val places = Graph.db.places().enabled()
-        if (places.isEmpty() || !hasForegroundLocation(context)) return
-        val loc = Locator.current(context, preferLowPower = true) ?: run {
-            Graph.tracker.log("problem", "Location unavailable for the 15-minute check")
-            return
+        if (places.isEmpty() || !hasForegroundLocation(context)) return true
+        val loc = Locator.current(context, preferLowPower = preferLowPower) ?: run {
+            Graph.tracker.log("problem", "Location unavailable ($via)")
+            return false
         }
         val now = System.currentTimeMillis()
         val inside = places.filter { p -> isInside(loc, p.lat, p.lng, p.radiusM) }.map { it.id }.toSet()
         val present = Graph.db.presence().all().map { it.placeId }.toSet()
-        for (id in inside - present) Graph.tracker.onEnter(id, now, "15-min check")
-        for (id in present - inside) Graph.tracker.onExit(id, now, "15-min check")
+        for (id in inside - present) Graph.tracker.onEnter(id, now, via)
+        for (id in present - inside) Graph.tracker.onExit(id, now, via)
+        return true
     }
 
     fun isInside(loc: Location, lat: Double, lng: Double, radiusM: Int): Boolean {

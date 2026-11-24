@@ -32,6 +32,11 @@ data class AppSettings(
     val theme: ThemeMode,
     val dynamicColor: Boolean,
     val onboarded: Boolean,
+    /**
+     * "When I open the app": no background location. Opening the app inside a
+     * work area starts the session; opening it after leaving ends it.
+     */
+    val trackOnOpenOnly: Boolean = false,
 ) {
     val workdaysPerWeek: Int get() = 7 - weekend.size
     val dailyTargetMs: Long
@@ -80,6 +85,7 @@ class SettingsRepo(private val context: Context) {
         val theme = stringPreferencesKey("theme")
         val dynamic = booleanPreferencesKey("dynamic_color")
         val onboarded = booleanPreferencesKey("onboarded")
+        val onOpenOnly = booleanPreferencesKey("track_on_open_only")
     }
 
     val flow: Flow<AppSettings> = context.dataStore.data.map { it.toSettings() }
@@ -100,6 +106,7 @@ class SettingsRepo(private val context: Context) {
             prefs[K.theme] = s.theme.name
             prefs[K.dynamic] = s.dynamicColor
             prefs[K.onboarded] = s.onboarded
+            prefs[K.onOpenOnly] = s.trackOnOpenOnly
         }
     }
 
@@ -119,6 +126,7 @@ class SettingsRepo(private val context: Context) {
             theme = this[K.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: d.theme,
             dynamicColor = this[K.dynamic] ?: d.dynamicColor,
             onboarded = this[K.onboarded] ?: d.onboarded,
+            trackOnOpenOnly = this[K.onOpenOnly] ?: d.trackOnOpenOnly,
         )
     }
 }
