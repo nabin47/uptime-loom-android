@@ -91,7 +91,7 @@ class MaintenanceWorker(ctx: Context, params: WorkerParameters) : CoroutineWorke
 class FallbackCheckWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
     override suspend fun doWork(): Result {
         Graph.init(applicationContext)
-        AreaMonitor.fallbackCheck(applicationContext)
+        AreaMonitor.checkNow(applicationContext, "15-min check", preferLowPower = true)
         return Result.success()
     }
 }

@@ -76,6 +76,25 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
 
+    private var lastOpenCheck = 0L
+
+    /**
+     * "When I open the app" mode (or location not allowed all the time):
+     * check where we are each time the app comes to the front.
+     */
+    fun onAppResumed() = viewModelScope.launch(Dispatchers.IO) {
+        val ctx = getApplication<Application>()
+        if (!AreaMonitor.countsOnOpenOnly(ctx) || !AreaMonitor.hasForegroundLocation(ctx)) return@launch
+        val now = System.currentTimeMillis()
+        if (now - lastOpenCheck < 60_000) return@launch
+        lastOpenCheck = now
+        checking.value = true
+        try { AreaMonitor.checkNow(ctx, "app opened", preferLowPower = false) } finally { checking.value = false }
+    }
+
+    /** True while the "app opened" location check runs. */
+    val checking = MutableStateFlow(false)
+
     /** Text shared to the app (e.g. a place from Google Maps), waiting to be opened. */
     val sharedText = MutableStateFlow<String?>(null)
     fun onShared(text: String?) { if (!text.isNullOrBlank()) sharedText.value = text }
@@ -123,6 +142,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         Graph.settings.update(transform)
         val after = Graph.settings.current()
         if (before.arriveDelayMin != after.arriveDelayMin) resync("arrival delay changed")
+        if (before.trackOnOpenOnly != after.trackOnOpenOnly) {
+            resync(if (after.trackOnOpenOnly) "switched to: when I open the app" else "switched to: automatic")
+            if (after.trackOnOpenOnly) { lastOpenCheck = 0L; onAppResumed() }
+        }
     }
 
     /** Re-arm area monitoring (after permissions change, areas edited...). */

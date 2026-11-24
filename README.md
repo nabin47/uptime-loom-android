@@ -54,6 +54,15 @@ The Android companion to [Uptime Loom for Windows](https://github.com/nabin47/up
 | Phone restarts | Areas are re-armed; if you're no longer inside one within 10 minutes, the open session ends at the restart |
 | You check in / out manually | A manual session starts / the running session ends |
 
+**Two ways to count** (Settings → Arriving and leaving):
+
+- **Automatically** (recommended) — needs location *"Allow all the time"*.
+  Android watches your areas and wakes the app only when you arrive or leave.
+- **When I open the app** — for people who prefer *"Only while using the
+  app"*. Opening the app inside a work area starts the session; opening it
+  after you've left ends it. If location is downgraded without choosing this,
+  the app falls back to it automatically.
+
 Work areas are watched with `GeofencingClient` (dwell + exit transitions).
 Everything is stored in a local Room database.
 
