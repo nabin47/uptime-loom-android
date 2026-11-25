@@ -118,6 +118,13 @@ object AreaMonitor {
         }
         if (error == null) Graph.tracker.log("setup", "Watching ${fences.size} area(s) ($reason)")
         else Graph.tracker.log("problem", "Couldn't watch areas: $error")
+
+        // Android re-reports "you're inside" for freshly added areas, but never
+        // "you're already outside". If we think we're inside (or a session is
+        // running), check once so a stale state can't keep a session open.
+        if (Graph.db.presence().all().isNotEmpty()) {
+            checkNow(context, "re-check after setup", preferLowPower = false)
+        }
     }
 
     /**

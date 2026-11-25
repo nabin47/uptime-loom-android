@@ -60,7 +60,9 @@ class Tracker(
             val name = db.places().byId(placeId)?.name ?: "area #$placeId"
             db.presence().delete(placeId)
             log("left", "$name ($via)", time)
-            if (db.presence().all().isEmpty() && db.sessions().open()?.source == Session.SOURCE_AUTO) {
+            // Leaving all areas ends the running session, whether it started
+            // automatically or with a manual check-in made at work.
+            if (db.presence().all().isEmpty() && db.sessions().open() != null) {
                 val delayMin = settings.current().leaveDelayMin
                 Scheduling.scheduleExitConfirm(context, exitTime = time, delayMs = delayMin * 60_000L)
             }
@@ -74,7 +76,7 @@ class Tracker(
         lock.withLock {
             if (db.presence().all().isNotEmpty()) return            // came back in time
             val open = db.sessions().open() ?: return
-            if (open.source != Session.SOURCE_AUTO) return             // manual check-in wins
+            if (open.start > exitTime) return                          // checked in after leaving
             val end = exitTime.coerceAtLeast(open.start)
             if (end - open.start < 60_000L) {
                 db.sessions().delete(open.id)                          // just passing through
@@ -107,6 +109,18 @@ class Tracker(
             db.sessions().update(open.copy(end = now.coerceAtLeast(open.start)))
             Scheduling.cancelExitConfirm(context)
             log("check-out", "Manual check-out")
+        }
+        refreshUi()
+    }
+
+    /** Ends the running session at [end] (e.g. "I forgot to check out, I left at 17:30"). */
+    suspend fun endRunningAt(end: Long) {
+        lock.withLock {
+            val open = db.sessions().open() ?: return
+            db.sessions().update(open.copy(end = end.coerceIn(open.start, System.currentTimeMillis()), edited = true))
+            db.presence().clear()
+            Scheduling.cancelExitConfirm(context)
+            log("ended", "Session ended by hand (forgotten check-out)", end)
         }
         refreshUi()
     }

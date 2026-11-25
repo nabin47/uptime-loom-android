@@ -31,10 +31,8 @@ class GeofenceReceiver : BroadcastReceiver() {
             if (event.hasError()) {
                 val msg = GeofenceStatusCodes.getStatusCodeString(event.errorCode)
                 tracker.log("problem", "Area monitoring paused: $msg (is location turned on?)")
-                if (event.errorCode == GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE) {
-                    // Location was switched off; areas must be re-added later.
-                    Graph.db.presence().clear()
-                }
+                // Location was switched off. Keep what we knew: areas are re-added
+                // (and the position re-checked) the next time they're set up.
                 return@runAsync
             }
             val when_ = event.triggeringLocation?.time?.takeIf { it > 0 } ?: System.currentTimeMillis()

@@ -107,6 +107,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun checkIn() = viewModelScope.launch { tracker.checkIn() }
     fun checkOut() = viewModelScope.launch { tracker.checkOut() }
+    fun endRunningAt(end: Long) = viewModelScope.launch { tracker.endRunningAt(end) }
 
     fun savePlace(place: Place) = viewModelScope.launch {
         if (place.id == 0L) db.places().insert(place) else db.places().update(place)

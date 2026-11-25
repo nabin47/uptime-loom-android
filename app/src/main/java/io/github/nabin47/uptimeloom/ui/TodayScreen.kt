@@ -41,6 +41,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,6 +88,7 @@ fun TodayScreen(state: UiState, vm: MainViewModel, openAreas: () -> Unit) {
 
         SetupCard(state, vm, openAreas)
         OnOpenModeNote(state, vm)
+        ForgottenSessionCard(state, vm)
 
         SectionCard {
             val inside = state.presence.mapNotNull { p -> state.placeName(p.placeId) }
@@ -104,7 +106,7 @@ fun TodayScreen(state: UiState, vm: MainViewModel, openAreas: () -> Unit) {
                 fontFamily = FontFamily.Monospace, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
             )
             Text(
-                if (running != null) "Started ${Fmt.time(context, running.start)}" +
+                if (running != null) "Started ${startedLabel(context, running.start, stats.today)}" +
                     (state.placeName(running.placeId)?.let { " at $it" } ?: "")
                 else state.sessions.lastOrNull()?.end?.let { "Last session ended ${Fmt.dayLabel(Fmt.date(it))}, ${Fmt.time(context, it)}" } ?: "No sessions yet",
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -201,7 +203,8 @@ private fun SetupCard(state: UiState, vm: MainViewModel, openAreas: () -> Unit) 
     LaunchedEffect(location, background, hasArea) { if (location && hasArea) vm.resync("app opened") }
 
     val onOpenOnly = state.settings.trackOnOpenOnly
-    if (location && (background || onOpenOnly) && notifications && (battery || onOpenOnly) && hasArea) return
+    val batteryOk = battery || onOpenOnly || state.settings.skipBatteryStep
+    if (location && (background || onOpenOnly) && notifications && batteryOk && hasArea) return
 
     if (disclosure) {
         AlertDialog(
@@ -251,7 +254,8 @@ private fun SetupCard(state: UiState, vm: MainViewModel, openAreas: () -> Unit) 
         }
         SetupStep(done = hasArea, title = "Add your work area", detail = "Your office, campus or anywhere else that counts as work.", action = "Add") { openAreas() }
         if (!onOpenOnly) SetupStep(
-            done = battery, title = "Don't restrict in the background",
+            done = batteryOk, title = "Don't restrict in the background",
+            secondary = "Skip" to { vm.updateSettings { it.copy(skipBatteryStep = true) } },
             detail = "Some phones stop apps in the background. Find Uptime Loom in the list and choose \"Don't optimise\" / \"Unrestricted\".",
             action = "Open",
         ) {
@@ -298,7 +302,10 @@ private fun OnOpenModeNote(state: UiState, vm: MainViewModel) {
 }
 
 @Composable
-private fun SetupStep(done: Boolean, title: String, detail: String, action: String, enabled: Boolean = true, onClick: () -> Unit) {
+private fun SetupStep(
+    done: Boolean, title: String, detail: String, action: String, enabled: Boolean = true,
+    secondary: Pair<String, () -> Unit>? = null, onClick: () -> Unit,
+) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(
             if (done) Icons.Filled.CheckCircle else Icons.Outlined.RadioButtonUnchecked, contentDescription = null,
@@ -309,6 +316,56 @@ private fun SetupStep(done: Boolean, title: String, detail: String, action: Stri
             Text(title, style = MaterialTheme.typography.bodyLarge)
             if (!done) Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        if (!done) TextButton(onClick = onClick, enabled = enabled) { Text(action) }
+        if (!done) Column(horizontalAlignment = Alignment.End) {
+            TextButton(onClick = onClick, enabled = enabled) { Text(action) }
+            secondary?.let { (label, act) -> TextButton(onClick = act) { Text(label) } }
+        }
+    }
+}
+
+/** "9:51 am", "yesterday, 9:51 am" or "Tue 24 Nov, 9:51 am". */
+private fun startedLabel(context: android.content.Context, t: Long, today: java.time.LocalDate): String {
+    val d = Fmt.date(t)
+    val time = Fmt.time(context, t)
+    return when (d) {
+        today -> time
+        today.minusDays(1) -> "yesterday, $time"
+        else -> "${Fmt.dayLabel(d)}, $time"
+    }
+}
+
+private const val FORGOTTEN_AFTER_MS = 14 * 3_600_000L
+
+/**
+ * A session that's been running for over 14 hours was almost certainly
+ * forgotten (e.g. a manual check-in without a check-out). Ask, don't guess.
+ */
+@Composable
+private fun ForgottenSessionCard(state: UiState, vm: MainViewModel) {
+    val running = state.running ?: return
+    val stats = state.stats ?: return
+    var dismissedId by rememberSaveable { mutableLongStateOf(-1L) }
+    if (dismissedId == running.id || stats.now - running.start < FORGOTTEN_AFTER_MS) return
+    val context = LocalContext.current
+    SectionCard {
+        Text("Still counting since ${startedLabel(context, running.start, stats.today)}", style = MaterialTheme.typography.titleSmall, color = Tone.warn)
+        Text(
+            "That's ${fmtHM(stats.now - running.start)}. Did you forget to check out? Set when you actually stopped and the extra time is removed.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = {
+                // Suggest the usual end of the workday on the day it started.
+                val zone = java.time.ZoneId.systemDefault()
+                val startDay = Fmt.date(running.start)
+                val endMin = state.settings.workEndMin ?: (17 * 60)
+                var guess = startDay.atTime(endMin / 60, endMin % 60)
+                val startLdt = java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(running.start), zone)
+                if (!guess.isAfter(startLdt)) guess = startLdt.plusHours(1)
+                pickDateTime(context, guess) { picked -> vm.endRunningAt(picked.atZone(zone).toInstant().toEpochMilli()) }
+            }) { Text("Set end time") }
+            TextButton(onClick = { dismissedId = running.id }) { Text("Still working") }
+        }
     }
 }

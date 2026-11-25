@@ -174,7 +174,7 @@ private fun SessionRow(s: Session, state: UiState, onClick: () -> Unit) {
     }
 }
 
-private fun pickDateTime(context: Context, initial: LocalDateTime, onPicked: (LocalDateTime) -> Unit) {
+internal fun pickDateTime(context: Context, initial: LocalDateTime, onPicked: (LocalDateTime) -> Unit) {
     DatePickerDialog(context, { _, y, m, d ->
         TimePickerDialog(context, { _, h, min ->
             onPicked(LocalDateTime.of(y, m + 1, d, h, min))

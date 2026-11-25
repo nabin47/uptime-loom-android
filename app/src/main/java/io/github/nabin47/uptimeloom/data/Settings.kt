@@ -37,6 +37,8 @@ data class AppSettings(
      * work area starts the session; opening it after leaving ends it.
      */
     val trackOnOpenOnly: Boolean = false,
+    /** The user skipped the "don't restrict in the background" setup step. */
+    val skipBatteryStep: Boolean = false,
 ) {
     val workdaysPerWeek: Int get() = 7 - weekend.size
     val dailyTargetMs: Long
@@ -86,6 +88,7 @@ class SettingsRepo(private val context: Context) {
         val dynamic = booleanPreferencesKey("dynamic_color")
         val onboarded = booleanPreferencesKey("onboarded")
         val onOpenOnly = booleanPreferencesKey("track_on_open_only")
+        val skipBattery = booleanPreferencesKey("skip_battery_step")
     }
 
     val flow: Flow<AppSettings> = context.dataStore.data.map { it.toSettings() }
@@ -107,6 +110,7 @@ class SettingsRepo(private val context: Context) {
             prefs[K.dynamic] = s.dynamicColor
             prefs[K.onboarded] = s.onboarded
             prefs[K.onOpenOnly] = s.trackOnOpenOnly
+            prefs[K.skipBattery] = s.skipBatteryStep
         }
     }
 
@@ -127,6 +131,7 @@ class SettingsRepo(private val context: Context) {
             dynamicColor = this[K.dynamic] ?: d.dynamicColor,
             onboarded = this[K.onboarded] ?: d.onboarded,
             trackOnOpenOnly = this[K.onOpenOnly] ?: d.trackOnOpenOnly,
+            skipBatteryStep = this[K.skipBattery] ?: d.skipBatteryStep,
         )
     }
 }
